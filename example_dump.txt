@@ -1,0 +1,40 @@
+Module(
+    body=[
+        ClassDef(
+            name='testfile',
+            bases=[],
+            keywords=[],
+            body=[
+                Assign(
+                    targets=[
+                        Name(id='a', ctx=Store())],
+                    value=Constant(value=1)),
+                ClassDef(
+                    name='class2',
+                    bases=[],
+                    keywords=[],
+                    body=[
+                        ClassDef(
+                            name='class3',
+                            bases=[],
+                            keywords=[],
+                            body=[
+                                Assign(
+                                    targets=[
+                                        Name(id='b', ctx=Store())],
+                                    value=Constant(value=1))],
+                            decorator_list=[])],
+                    decorator_list=[]),
+                ClassDef(
+                    name='class1',
+                    bases=[
+                        Name(id='class2', ctx=Load())],
+                    keywords=[],
+                    body=[
+                        Assign(
+                            targets=[
+                                Name(id='c', ctx=Store())],
+                            value=Constant(value=1))],
+                    decorator_list=[])],
+            decorator_list=[])],
+    type_ignores=[])
