@@ -12276,7 +12276,6 @@ class JavaParser ( Parser ):
 
 
     def typeType(self):
-
         localctx = JavaParser.TypeTypeContext(self, self._ctx, self.state)
         self.enterRule(localctx, 236, self.RULE_typeType)
         self._la = 0 # Token type

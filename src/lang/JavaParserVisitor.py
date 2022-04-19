@@ -5,28 +5,10 @@ import ast
 # This class defines a complete generic visitor for a parse tree produced by JavaParser.
 
 class JavaParserVisitor(ParseTreeVisitor):
-    path = [] # Path down the tree, containing all nodes with bodies
-    python_ast = ast.parse('')
+
     # Visit a parse tree produced by JavaParser#compilationUnit.
     def visitCompilationUnit(self, ctx):
-        self.path.append(self.python_ast.body) # AST root
-        self.visitChildren(ctx)
-        self.path.pop() # Nodes are removed from path after all children are visited
-
-        ast.fix_missing_locations(self.python_ast) # Add line numbers
-
-        #Save file
-        python_code = ast.unparse(self.python_ast)
-        python_dump = ast.dump(self.python_ast, indent=4)
-        print(python_dump)
-        with open("translation.py", "w") as output:
-            output.write(python_code)
-            output.close()
-        with open("translation_dump.txt", "w") as output:
-            output.write(python_dump)
-            output.close()
-
-
+        return self.visitChildren(ctx)
 
     # Visit a parse tree produced by JavaParser#packageDeclaration.
     def visitPackageDeclaration(self, ctx):
@@ -60,24 +42,7 @@ class JavaParserVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by JavaParser#classDeclaration.
     def visitClassDeclaration(self, ctx):
-        child_count = int(ctx.getChildCount())
-        if child_count >3:
-            # extends, implements, or permits
-            # c0 = ctx.getChild(0)  # class
-            c1 = ctx.getChild(1).getText()  # class name
-            c2 = ctx.getChild(2).getText()  #  extends/implements/permits
-            if c2 == 'extends':
-                c3 = ctx.getChild(3).getChild(0).getText()  # extends class name
-            # implements/permits not implemented
-            node = ast.ClassDef(name=c1,bases=[ast.Name(c3, ast.Load())],keywords=[],body=[],decorator_list=[])
-        else:
-            c1 = ctx.getChild(1).getText()  # class name
-            node = ast.ClassDef(name=c1,bases=[],keywords=[],body=[],decorator_list=[])
-        self.path[-1].insert(len(self.path[-1]), node)
-        self.path.append(self.path[-1][-1].body)
-        self.visitChildren(ctx)
-        self.path.pop()
-
+        return self.visitChildren(ctx)
 
     # Visit a parse tree produced by JavaParser#typeParameters.
     def visitTypeParameters(self, ctx):
@@ -221,15 +186,7 @@ class JavaParserVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by JavaParser#variableDeclarator.
     def visitVariableDeclarator(self, ctx):
-        # CONSTANT INT ASSIGN - TODO: variable -> other types
-        c0 = ctx.getChild(0).getText()  # variable name
-        c1 = ctx.getChild(1).getText()  # operator (=)
-        c2 = ctx.getChild(2).getText()  # value
-        node = ast.Assign(
-            targets=[ast.Name(id=c0, ctx=ast.Store())],
-            value=ast.Constant(value=int(c2)))
-        self.path[-1].insert(len(self.path[-1]), node)
-        self.visitChildren(ctx)
+        return self.visitChildren(ctx)
 
 
     # Visit a parse tree produced by JavaParser#variableDeclaratorId.
@@ -665,5 +622,3 @@ class JavaParserVisitor(ParseTreeVisitor):
     # Visit a parse tree produced by JavaParser#arguments.
     def visitArguments(self, ctx):
         return self.visitChildren(ctx)
-
-
