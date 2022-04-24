@@ -12227,7 +12227,7 @@ class JavaParser ( Parser ):
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
             self.parser = parser
-
+            
         def classOrInterfaceType(self):
             return self.getTypedRuleContext(JavaParser.ClassOrInterfaceTypeContext,0)
 

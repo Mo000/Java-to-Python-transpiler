@@ -5,7 +5,7 @@ Java 17 / Python 3.10
     - No access modifiers (PRIVATE/PROTECTED/PUBLIC)
 - Variables - (FieldDeclaration / LocalVariableDeclaration)
     - Primitives: byte/int, short/int, int/int, long/int, float/float, double/float, char/str, string/str, boolean/bool
-    - Structures: array/list, arrayList/list
+    - Structures: array/list, [arrayList/list; not yet fully implemented]
 
 REPORT NOTES:
     Classes/Methods:

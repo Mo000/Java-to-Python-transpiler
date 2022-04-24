@@ -1,5 +1,4 @@
 class testfile:
 
     def main(args):
-        e = ['e', 'f']
-        z = 3
+        z = 1+21 + 2

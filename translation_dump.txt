@@ -18,16 +18,12 @@ Module(
                     body=[
                         Assign(
                             targets=[
-                                Name(id='e', ctx=Store())],
-                            value=List(
-                                elts=[
-                                    Constant(value='e'),
-                                    Constant(value='f')],
-                                ctx=Load())),
-                        Assign(
-                            targets=[
                                 Name(id='z', ctx=Store())],
-                            value=Name(id='3', ctx=Load()))],
+                            value=Name(id='1+2', ctx=Load())),
+                        BinOp(
+                            left=Constant(value=1),
+                            op=Add(),
+                            right=Constant(value=2))],
                     decorator_list=[],
                     returns=[])],
             decorator_list=[])],
