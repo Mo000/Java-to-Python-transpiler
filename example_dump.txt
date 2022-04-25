@@ -1,1 +1,24 @@
-Module(body=[], type_ignores=[])
+Module(
+    body=[
+        ClassDef(
+            name='test',
+            bases=[],
+            keywords=[],
+            body=[
+                Assign(
+                    targets=[
+                        Name(id='i', ctx=Store())],
+                    value=List(
+                        elts=[
+                            Constant(value=1),
+                            Constant(value=5)],
+                        ctx=Load())),
+                Assign(
+                    targets=[
+                        Subscript(
+                            value=Name(id='i', ctx=Load()),
+                            slice=Constant(value=0),
+                            ctx=Store())],
+                    value=Constant(value=3))],
+            decorator_list=[])],
+    type_ignores=[])

@@ -19,3 +19,7 @@ REPORT NOTES:
     TECHNICAL DEBT...
         Navigating (PARSE) tree
             j2py CSS-Type selectors
+
+    Conversions aren't immediately obvious
+        e.g. expression.DOT() -> ast.Attribute()
+    Load/Store for python AST

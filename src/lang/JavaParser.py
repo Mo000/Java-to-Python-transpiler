@@ -1382,7 +1382,6 @@ class JavaParser ( Parser ):
         def classDeclaration(self):
             return self.getTypedRuleContext(JavaParser.ClassDeclarationContext,0)
 
-
         def enumDeclaration(self):
             return self.getTypedRuleContext(JavaParser.EnumDeclarationContext,0)
 
@@ -3414,7 +3413,7 @@ class JavaParser ( Parser ):
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
             self.parser = parser
-
+            
         def typeType(self):
             return self.getTypedRuleContext(JavaParser.TypeTypeContext,0)
 
@@ -7603,7 +7602,6 @@ class JavaParser ( Parser ):
         def localVariableDeclaration(self):
             return self.getTypedRuleContext(JavaParser.LocalVariableDeclarationContext,0)
 
-
         def SEMI(self):
             return self.getToken(JavaParser.SEMI, 0)
 
@@ -8086,7 +8084,6 @@ class JavaParser ( Parser ):
                 return self.getTypedRuleContexts(JavaParser.SwitchLabelContext)
             else:
                 return self.getTypedRuleContext(JavaParser.SwitchLabelContext,i)
-
 
         def SYNCHRONIZED(self):
             return self.getToken(JavaParser.SYNCHRONIZED, 0)
@@ -9451,7 +9448,7 @@ class JavaParser ( Parser ):
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
             self.parser = parser
-
+            
         def expression(self, i:int=None):
             if i is None:
                 return self.getTypedRuleContexts(JavaParser.ExpressionContext)
@@ -9728,7 +9725,6 @@ class JavaParser ( Parser ):
         def typeArguments(self):
             return self.getTypedRuleContext(JavaParser.TypeArgumentsContext,0)
 
-
         def classType(self):
             return self.getTypedRuleContext(JavaParser.ClassTypeContext,0)
 
@@ -9839,7 +9835,6 @@ class JavaParser ( Parser ):
 
         def explicitGenericInvocation(self):
             return self.getTypedRuleContext(JavaParser.ExplicitGenericInvocationContext,0)
-
 
         def nonWildcardTypeArguments(self):
             return self.getTypedRuleContext(JavaParser.NonWildcardTypeArgumentsContext,0)
@@ -12227,7 +12222,7 @@ class JavaParser ( Parser ):
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
             self.parser = parser
-            
+
         def classOrInterfaceType(self):
             return self.getTypedRuleContext(JavaParser.ClassOrInterfaceTypeContext,0)
 

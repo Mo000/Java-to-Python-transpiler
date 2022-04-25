@@ -1,5 +1,3 @@
-class testfile:
-    
-    def main(args):
-        e = ['e', 'f']
-        z = 3
+class test:
+    i = [1,5]
+    i[0] = 3
