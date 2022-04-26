@@ -3335,7 +3335,7 @@ class JavaParser ( Parser ):
             super().__init__(parent, invokingState)
             self.parser = parser
             self.constructorBody = None # BlockContext
-
+            
         def identifier(self):
             return self.getTypedRuleContext(JavaParser.IdentifierContext,0)
 
@@ -9448,7 +9448,7 @@ class JavaParser ( Parser ):
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
             self.parser = parser
-            
+
         def expression(self, i:int=None):
             if i is None:
                 return self.getTypedRuleContexts(JavaParser.ExpressionContext)

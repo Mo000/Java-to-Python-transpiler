@@ -9,7 +9,7 @@ class AstTranslator:
         parser = JavaParser(CommonTokenStream(JavaLexer(FileStream(input_source, encoding="utf-8"))))
         tree = parser.compilationUnit()
         ASTVisitor().visit(tree)
-        #print(Trees.toStringTree(tree, None, parser))
+        print(Trees.toStringTree(tree, None, parser))
     if __name__ == '__main__':
         target_file_path = 'java-runtime/testfile.java'
         execute(target_file_path)

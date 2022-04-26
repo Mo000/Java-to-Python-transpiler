@@ -8,17 +8,12 @@ Module(
                 Assign(
                     targets=[
                         Name(id='i', ctx=Store())],
-                    value=List(
-                        elts=[
-                            Constant(value=1),
-                            Constant(value=5)],
-                        ctx=Load())),
-                Assign(
-                    targets=[
-                        Subscript(
-                            value=Name(id='i', ctx=Load()),
-                            slice=Constant(value=0),
-                            ctx=Store())],
-                    value=Constant(value=3))],
+                    value=BinOp(
+                        left=BinOp(
+                            left=Constant(value=1),
+                            op=Add(),
+                            right=Constant(value=2)),
+                        op=Mult(),
+                        right=Constant(value=3)))],
             decorator_list=[])],
     type_ignores=[])

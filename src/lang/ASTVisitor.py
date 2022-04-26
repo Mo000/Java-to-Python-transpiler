@@ -397,7 +397,7 @@ class ASTVisitor(JavaParserVisitor):
         lambdaExpression = ctx.lambdaExpression()
         switchExpression = ctx.switchExpression()
         identifier = ctx.identifier()
-        
+
         exprLBRACK =  ctx.LBRACK() # [
         exprRBRACK = ctx.RBRACK() # [
         exprBITAND = ctx.BITAND() # &
@@ -602,15 +602,18 @@ class ASTVisitor(JavaParserVisitor):
         return self.visit(ctx.arrayInitializer())
 
     def visitPrimary(self, ctx):
-        # LPAREN✕ expression✕ RPAREN✕ THIS✕ SUPER✕ literal✓
+        # LPAREN✕ expression✓ RPAREN✕ THIS✕ SUPER✕ literal✓
         # identifier✓ typeTypeOrVoid✕ DOT✕ CLASS✕ nonWildcardTypeArguments✕
         # explicitGenericInvocationSuffix✕ arguments✕
 
         literal = ctx.literal()
-        identifier = ctx.identifier()
+        identifier = ctx.identifier()  
+        expression = ctx.expression()
         node = ast.Constant(value=None)
 
-        if literal != None:
+        if expression != None: # Parenthesis
+            node = self.visit(expression)
+        elif literal != None:
             value = self.visit(literal)
             node = ast.Constant(value=value)
         elif identifier != None:

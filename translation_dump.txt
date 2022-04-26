@@ -7,264 +7,28 @@ Module(
             body=[
                 Assign(
                     targets=[
-                        Name(id='i', ctx=Store())],
-                    value=List(
-                        elts=[
-                            Constant(value='g'),
-                            Constant(value='h')],
-                        ctx=Load())),
-                Assign(
-                    targets=[
                         Name(id='f', ctx=Store())],
-                    value=Constant(value=2)),
-                Assign(
-                    targets=[
-                        Name(id='fh', ctx=Store())],
-                    value=Constant(value='hee')),
-                Assign(
-                    targets=[
-                        Name(id='d', ctx=Store())],
-                    value=Name(id='i', ctx=Load())),
-                FunctionDef(
-                    name='main',
-                    args=[
-                        arguments(
-                            posonlyargs=[],
-                            args=[
-                                arg(arg='args')],
-                            kwonlyargs=[],
-                            kw_defaults=[],
-                            defaults=[])],
-                    body=[
-                        Assign(
-                            targets=[
-                                Name(id='e', ctx=Store())],
-                            value=List(
-                                elts=[
-                                    Constant(value='e'),
-                                    Constant(value='f')],
-                                ctx=Load())),
-                        Assign(
-                            targets=[
-                                Name(id='z', ctx=Store())],
-                            value=Constant(value=3)),
-                        AugAssign(
-                            target=Name(id='z', ctx=Store()),
-                            op=Add(),
-                            value=Constant(value=1)),
-                        Assign(
-                            targets=[
-                                Name(id='x', ctx=Store())],
-                            value=Constant(value=True)),
-                        Assign(
-                            targets=[
-                                Name(id='y', ctx=Store())],
-                            value=Constant(value=False)),
-                        Assign(
-                            targets=[
-                                Name(id='x', ctx=Store())],
-                            value=Constant(value=False)),
-                        Assign(
-                            targets=[
-                                Name(id='zs', ctx=Store())],
-                            value=BinOp(
-                                left=BinOp(
-                                    left=Constant(value=1),
-                                    op=Add(),
-                                    right=Constant(value=2)),
-                                op=Add(),
-                                right=Constant(value=3))),
-                        Assign(
-                            targets=[
-                                Name(id='z', ctx=Store())],
-                            value=Constant(value=2)),
-                        Assign(
-                            targets=[
-                                Name(id='z', ctx=Store())],
-                            value=BinOp(
+                    value=BinOp(
+                        left=BinOp(
+                            left=BinOp(
                                 left=Constant(value=1),
                                 op=Add(),
-                                right=Constant(value=2)))],
-                    decorator_list=[],
-                    returns=[]),
-                Assign(
-                    targets=[
-                        Name(id='c', ctx=Store())],
-                    value=Constant(value='test')),
-                Assign(
-                    targets=[
-                        Name(id='o', ctx=Store())],
-                    value=Constant(value=5)),
-                Assign(
-                    targets=[
-                        Name(id='x', ctx=Store())],
-                    value=BinOp(
-                        left=Constant(value=2),
-                        op=Add(),
-                        right=Constant(value=3))),
-                FunctionDef(
-                    name='__init__',
-                    args=[
-                        arguments(
-                            posonlyargs=[],
-                            args=[
-                                arg(arg='xx')],
-                            kwonlyargs=[],
-                            kw_defaults=[],
-                            defaults=[])],
-                    body=[
-                        Assign(
-                            targets=[
-                                Name(id='x', ctx=Store())],
-                            value=Name(id='xx', ctx=Load()))],
-                    decorator_list=[],
-                    returns=[]),
-                FunctionDef(
-                    name='test',
-                    args=[
-                        arguments(
-                            posonlyargs=[],
-                            args=[
-                                arg(arg='x'),
-                                arg(arg='y')],
-                            kwonlyargs=[],
-                            kw_defaults=[],
-                            defaults=[])],
-                    body=[
-                        Assign(
-                            targets=[
-                                Name(id='i', ctx=Store())],
-                            value=List(
-                                elts=[
-                                    List(
-                                        elts=[
-                                            Constant(value='g'),
-                                            Constant(value='h')],
-                                        ctx=Load())],
-                                ctx=Load())),
-                        Assign(
-                            targets=[
-                                Subscript(
-                                    value=Subscript(
-                                        value=Name(id='i', ctx=Load()),
-                                        slice=Constant(value=0),
-                                        ctx=Load()),
-                                    slice=Constant(value=0),
-                                    ctx=Load())],
-                            value=Constant(value='z')),
-                        Assign(
-                            targets=[
-                                Name(id='ee', ctx=Store())],
-                            value=Constant(value=5)),
-                        AugAssign(
-                            target=Name(id='ee', ctx=Store()),
+                                right=Constant(value=2)),
                             op=Add(),
-                            value=Constant(value=5)),
-                        AugAssign(
-                            target=Name(id='ee', ctx=Store()),
-                            op=Add(),
-                            value=Constant(value=1)),
-                        Assign(
-                            targets=[
-                                Name(id='t', ctx=Store())],
-                            value=Constant(value=None)),
-                        Assign(
-                            targets=[
-                                Name(id='zz', ctx=Store())],
-                            value=BinOp(
-                                left=Constant(value=5),
-                                op=Add(),
-                                right=Constant(value=10))),
-                        Assign(
-                            targets=[
-                                Name(id='zz', ctx=Store())],
-                            value=BinOp(
-                                left=Name(id='zz', ctx=Load()),
-                                op=Add(),
-                                right=Constant(value=20))),
-                        Assign(
-                            targets=[
-                                Name(id='myObj', ctx=Store())],
-                            value=Call(
-                                func=Name(id='testfile', ctx=Load()),
-                                args=[
-                                    arg(arg='5')],
-                                keywords=[])),
-                        Assign(
-                            targets=[
-                                Attribute(
-                                    value=Name(id='myObj', ctx=Load()),
-                                    attr='x',
-                                    ctx=Load())],
-                            value=Constant(value=10)),
-                        Assign(
-                            targets=[
-                                Name(id='c', ctx=Store())],
-                            value=Attribute(
-                                value=Name(id='myObj', ctx=Load()),
-                                attr='x',
-                                ctx=Load())),
-                        Assign(
-                            targets=[
-                                Name(id='z', ctx=Store())],
-                            value=Constant(value=20)),
-                        Assign(
-                            targets=[
-                                Name(id='c', ctx=Store())],
-                            value=Name(id='z', ctx=Load())),
-                        Assign(
-                            targets=[
-                                Attribute(
-                                    value=Name(id='myObj', ctx=Load()),
-                                    attr='x',
-                                    ctx=Load())],
-                            value=Constant(value=5)),
-                        Assign(
-                            targets=[
-                                Name(id='zzz', ctx=Store())],
-                            value=Constant(value='hey')),
-                        Assign(
-                            targets=[
-                                Name(id='g', ctx=Store())],
-                            value=BinOp(
+                            right=BinOp(
                                 left=Constant(value=2),
-                                op=Add(),
-                                right=Constant(value=6))),
-                        Assign(
-                            targets=[
-                                Name(id='g', ctx=Store())],
-                            value=BinOp(
-                                left=Name(id='g', ctx=Load()),
-                                op=Add(),
-                                right=Constant(value=3))),
-                        Assign(
-                            targets=[
-                                Name(id='a', ctx=Store())],
-                            value=Name(id='g', ctx=Load())),
-                        Assign(
-                            targets=[
-                                Name(id='d', ctx=Store())],
-                            value=Constant(value=None)),
-                        Assign(
-                            targets=[
-                                Name(id='zzz', ctx=Store())],
-                            value=Constant(value='heys')),
-                        Assign(
-                            targets=[
-                                Name(id='x', ctx=Store())],
-                            value=Constant(value='5')),
-                        Assign(
-                            targets=[
-                                Name(id='y', ctx=Store())],
-                            value=Constant(value=5))],
-                    decorator_list=[],
-                    returns=[])],
-            decorator_list=[]),
-        ClassDef(
-            name='test2',
-            bases=[
-                Constant(value='testfile')],
-            keywords=[],
-            body=[],
+                                op=Mult(),
+                                right=BinOp(
+                                    left=BinOp(
+                                        left=BinOp(
+                                            left=Constant(value=2),
+                                            op=Mult(),
+                                            right=Constant(value=4)),
+                                        op=Add(),
+                                        right=Constant(value=3)),
+                                    op=Mult(),
+                                    right=Constant(value=3)))),
+                        op=Mult(),
+                        right=Constant(value=2)))],
             decorator_list=[])],
     type_ignores=[])
