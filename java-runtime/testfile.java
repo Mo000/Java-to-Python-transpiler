@@ -1,29 +1,86 @@
 public class testfile
 {
-//     int gg,hh,jj;
-//     String i[] = {"g", "h"};
-    float f = ((1+2)+2*((2*4+3)*3))*2;
-//     String fh = "hee";
-//     String[] d = i; 
-//     public static void main(String[] args) {
-//         String[] e = {"e", "f"};
-//         int z = 3;
-//         //e[0] = "l";
-//         z += 1;
-//         boolean x = true;
-//         boolean y = false;
-//         x = false;
-//         int zs = 1+2+3;
-//         z = 2;
-//         z = 1+2;
-//         //System.out.println("hello");
-//     }
-//     String c = "test";
-//     long o = 5l;
-//     int x = 2 + 3;
-//     public testfile(int xx){
-//         x = xx;
-//     }
+    public static int main(String[] args) {
+        // int y = 0;
+        // if(y > 1 && y > 0){
+        //     int x = 0;
+        // }
+        // else if (y == 2 || y < 2){
+        //     int a = 0;
+        // }
+        // else{
+        //     int z = 0;
+        // }
+        // int z=1, y=2, c=3;
+        // z = y = c = 0;
+        // for (int l = 1+5; l <5; l+=3+2){
+        //     int xx = 0;
+        // }
+        // for (int i = 5, j = 10, k = 15; i < 20; i+=5){
+        //     int x = 0;
+        // }
+        // int i = 0;
+        // while (i < 5) {
+        //     i++;
+        // }
+        // try {
+        //     int x = 0;
+        // }
+        // catch(Exception er) {
+        //     int z = 0;
+        // }
+        // catch(Throwable er) {
+        //     int z = 0;
+        // }
+        // finally {
+        //     int f = 6;
+        // }
+        int x = 0;
+        for (int i=0; i<10; i++){
+            if (i==2){
+                continue;
+            }
+        }
+        return (x+5);
+        // switch(x){
+        //     case 0:
+        //         switch(x){
+        //             case 3:
+        //                 break;
+        //         }
+        //         int y = 1;
+        //         break;
+        //     case 1:
+        //         int z = 2;
+        //         break;
+        //     case 2:
+        //         int p = 3;
+        //         break;
+        //     default:
+        //         break;
+        // switch(x){
+        //     case 0:
+        //         break;
+        //     case 1:
+        //         switch(x){
+        //             case 1:
+        //                 break;
+        //             default:
+        //                 break;
+        //         }
+        //         break;
+        //     case 8:
+        //         break;
+        //     default:
+        //         int xx = 0;
+        //         break;
+        // }
+    }
+    // System.out.println("x");
+    // int x;
+    // public testfile(int xx){
+    //     x = xx;
+    // }
 //      public static void test(String x, int y) {
 //         String[][] i = {{"g", "h"}};
 //         i[0][0] = "z";

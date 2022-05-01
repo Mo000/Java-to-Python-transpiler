@@ -1,2 +1,6 @@
+from tkinter import Y
+
+
 class test:
-    i = (1+2)*3
+    x,y = 5,10
+    print(x)

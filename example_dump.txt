@@ -1,5 +1,10 @@
 Module(
     body=[
+        ImportFrom(
+            module='tkinter',
+            names=[
+                alias(name='Y')],
+            level=0),
         ClassDef(
             name='test',
             bases=[],
@@ -7,13 +12,21 @@ Module(
             body=[
                 Assign(
                     targets=[
-                        Name(id='i', ctx=Store())],
-                    value=BinOp(
-                        left=BinOp(
-                            left=Constant(value=1),
-                            op=Add(),
-                            right=Constant(value=2)),
-                        op=Mult(),
-                        right=Constant(value=3)))],
+                        Tuple(
+                            elts=[
+                                Name(id='x', ctx=Store()),
+                                Name(id='y', ctx=Store())],
+                            ctx=Store())],
+                    value=Tuple(
+                        elts=[
+                            Constant(value=5),
+                            Constant(value=10)],
+                        ctx=Load())),
+                Expr(
+                    value=Call(
+                        func=Name(id='print', ctx=Load()),
+                        args=[
+                            Name(id='x', ctx=Load())],
+                        keywords=[]))],
             decorator_list=[])],
     type_ignores=[])

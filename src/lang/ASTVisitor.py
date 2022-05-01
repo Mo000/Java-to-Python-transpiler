@@ -7,6 +7,7 @@ import ast
 class ASTVisitor(JavaParserVisitor):
 
     astCtx = ast.Load() # Set context for loading/store identifiers
+    asnCtx = False # Set context for assignment
 
     # Visit a parse tree produced by JavaParser#compilationUnit.
     def visitCompilationUnit(self, ctx):
@@ -32,12 +33,12 @@ class ASTVisitor(JavaParserVisitor):
     
         ast.fix_missing_locations(python_ast) # Add line numbers
         # Save file
-        python_code = ast.unparse(python_ast)
         python_dump = ast.dump(python_ast, indent=4)
-        #print(python_dump)
+        # print(python_dump)
+        python_code = ast.unparse(python_ast)
         with open("translation.py", "w") as output:
-            output.write(python_code)
-            output.close()
+             output.write(python_code)
+             output.close()
         with open("translation_dump.txt", "w") as output:
             output.write(python_dump)
             output.close()
@@ -77,6 +78,7 @@ class ASTVisitor(JavaParserVisitor):
 
         className = self.visit(ctx.identifier())
         classBody = self.visit(ctx.classBody())
+        classBody = self.emptyToPass(classBody)
 
         node = None
 
@@ -150,6 +152,7 @@ class ASTVisitor(JavaParserVisitor):
         constructorName = "__init__" # Standard Python class constructor name
         constructorParams = self.visit(formalParameters)
         constructorBody = self.visit(block)
+        constructorBody = self.emptyToPass(constructorBody)
 
         constructorArgs = []
         for arg in constructorParams:
@@ -182,6 +185,7 @@ class ASTVisitor(JavaParserVisitor):
         methodName = self.visit(identifier)
         methodBody = self.visit(methodBody)
         methodParams = self.visit(formalParameters)
+        methodBody = self.emptyToPass(methodBody)
         
         methodArgs = []
         for arg in methodParams:
@@ -232,22 +236,23 @@ class ASTVisitor(JavaParserVisitor):
             return None
 
     def visitStatement(self, ctx):
-        # block✓ ASSERT✕ expression✓ SEMI✕ COLON✕ IF✕ parExpression✕
-        # statement✕ ELSE✕ FOR✕ LPAREN✕ forControl✕ RPAREN✕ WHILE✕
-        # DO✕ TRY✕ finallyBlock✕ catchClause✕ resourceSpecification✕
-        # SWITCH✕ LBRACE✕ RBRACE✕ switchBlockStatementGroup✕
-        # switchLabel✕ SYNCHRONIZED✕ RETURN✕ THROW✕ BREAK✕
-        # identifier✕ CONTINUE✕ YIELD✕ switchExpression✕
+        # block✓ ASSERT✕ expression✓ SEMI✕ COLON✕ IF✓ parExpression✓
+        # statement✓ ELSE✓ FOR✓ LPAREN✕ forControl✓ RPAREN✕ WHILE✓
+        # DO✕ TRY✓ finallyBlock✓ catchClause✓ resourceSpecification✕
+        # SWITCH✓ LBRACE✕ RBRACE✕ switchBlockStatementGroup✓
+        # switchLabel✓ SYNCHRONIZED✕ RETURN✓ THROW✕ BREAK✕
+        # identifier✕ CONTINUE✓ YIELD✕ switchExpression✕
 
         block = ctx.block()
         expression = ctx.expression()
-        stateIF = ctx.IF()
+        identifier = ctx.identifier()
         parExpression = ctx.parExpression()
+        stateIF = ctx.IF()
         statement = ctx.statement()
         stateELSE = ctx.ELSE()
         stateFOR = ctx.FOR()
+        forControl = ctx.forControl()
         stateWHILE = ctx.WHILE()
-        stateDO = ctx.DO()
         stateTRY = ctx.TRY()
         finallyBlock = ctx.finallyBlock()
         catchClause = ctx.catchClause()
@@ -255,33 +260,207 @@ class ASTVisitor(JavaParserVisitor):
         switchBlockStatementGroup = ctx.switchBlockStatementGroup()
         switchLabel = ctx.switchLabel()
         stateRETURN = ctx.RETURN()
-        stateTHROW = ctx.THROW()
         stateBREAK = ctx.BREAK()
-        identifier = ctx.identifier()
         stateCONTINUE = ctx.CONTINUE()
-        stateYIELD = ctx.YIELD()
         switchExpression = ctx.switchExpression()
 
-        if block != None:
-            return self.visit(block)
 
         statements = []
-        expressions = []
+        parenExpression = []
         node = None
 
+        if parExpression != None:
+            parenExpression = self.visit(parExpression)
         if len(statement)>0:
             statements = self.visitAll(statement)
 
-        if len(expression)>0:
+        if stateIF != None:
+            elseNode = []
+            if stateELSE != None:
+                elseNode = statements[1]
+                if not isinstance(elseNode, list):
+                    elseNode = [elseNode] # elseNode must be a list (a block returns a list, a statement does not)
+            ifBody = statements[0]
+            ifBody = self.emptyToPass(ifBody)
+            node = ast.If(test=parenExpression, body=ifBody, orelse=elseNode)
+        elif stateFOR != None:
+            node = self.visit(forControl)
+            node.body.extend(statements[0]) # Concatenate body lists
+            node.body = self.emptyToPass(node.body)
+        elif stateWHILE != None:
+            whileBody = statements[0]
+            whileBody = self.emptyToPass(whileBody)
+            node = ast.While(test=parenExpression, body=whileBody, orelse=[])
+        elif stateTRY != None:
+            # Exception types not converted
+            finalBodyNode = []
+            if finallyBlock != None:
+                finalBodyNode = self.visit(finallyBlock)
+                finalBodyNode = self.emptyToPass(finalBodyNode)
+            tryBody = self.visit(block)
+            tryBody = self.emptyToPass(tryBody)
+            node = ast.Try(body=tryBody, handlers=self.visitAll(catchClause), orelse=[], finalbody=finalBodyNode)
+        elif stateSWITCH != None:
+            # parenExpression switchBlockStatementGroup[] switchLabel[]
+            prevNode = []
+            for i in range(len(switchBlockStatementGroup)-1,-1,-1): # Iterate backwards
+                switchNode = self.visit(switchBlockStatementGroup[i])
+                if hasattr(switchNode, "test"):
+                    switchNode.test = ast.Compare(left=parenExpression, ops=[ast.Eq()], comparators=[switchNode.test])
+                    if not isinstance(prevNode, list):
+                        prevNode = [prevNode] # Ensure that prevNode is always a list
+                    switchNode.orelse = prevNode
+                    prevNode = switchNode
+                else:
+                    # Default (else) statement
+                    prevNode = switchNode
+            node = prevNode
+        elif stateBREAK != None:
+            return ast.Pass()
+        elif stateRETURN != None:
+            return ast.Return(value=self.visit(expression[0]))
+        elif stateCONTINUE != None:
+            return ast.Continue()
+        elif len(expression)>0:
             if len(expression)>1:
-                expressions = self.visitAll(expression)
-                print("len(statement expression>1)")
-                return None
+                print("len(expression)>1")
+                return self.visitAll(expression)
             else:
-                # singular expression statement
                 return self.visit(expression[0])
+        elif block != None:
+            node = self.visit(block)
+        return node
 
-        return None
+    def visitForControl(self, ctx):
+        # enhancedForControl✓ SEMI✕ forInit✓ expression✓ expressionList✓
+
+        forInit = ctx.forInit()
+        expression = ctx.expression()
+        expressionList = ctx.expressionList()
+        enhancedForControl = ctx.enhancedForControl() # e.g. for (int x : array) {}
+
+        #TODO: implement enhanced for control
+        #TODO: infinite loops
+        
+        node = None
+
+        if enhancedForControl != None:
+            print("enhanced for loop")
+            node = None
+        else:
+            # Non-infinite loop, single expression
+            
+            init = self.visit(forInit)
+            expr = self.visit(expression)
+            exprList = self.visit(expressionList)
+
+            # Convert {x=a; x<b; x+=c} to x in range(a, b, c)
+            forBody = []
+            if hasattr(init.targets[0], "elts"): # Unpack multiple assignment tuples
+                forTarget = init.targets[0].elts[0]
+                forA = init.value.elts[0]
+                
+                # Add other assignments to body
+                for i in range(len(init.targets[0].elts)):
+                    if i == 0: continue # Skip first assignment
+                    forBody.append(ast.Assign(targets=[init.targets[0].elts[i]],value=init.value.elts[i]))
+            else:
+                forTarget = init.targets[0]
+                forA = init.value
+            forB = expr.comparators[0]
+            forBOp = expr.ops[0] # Lt <, Gt >, LtE <=, GtE >=
+            forC = exprList[0].value
+            forCOp = exprList[0].op # Add, Sub
+            if ast.dump(forCOp) == "Add()":
+                if ast.dump(forBOp) == "Gt()" or ast.dump(forBOp) == "GtE()":
+                    # Potentially infinite loop -> TODO: make a while loop
+                    print("infinite loop")
+            else: # Sub
+                forC.value = -forC.value
+                if ast.dump(forBOp) == "Lt()" or ast.dump(forBOp) == "LtE()":
+                    print("infinite loop")
+            
+            node = ast.For(target=forTarget, iter=ast.Call(
+                func=ast.Name(
+                    id='range', ctx=ast.Load()),
+                    args=[
+                        forA,
+                        forB,
+                        forC],
+                    keywords=[]),
+                body=forBody, orelse=[])
+        return node
+    
+    def visitForInit(self, ctx):
+        # localVariableDeclaration✓ expressionList✕
+
+        return self.visit(ctx.localVariableDeclaration())
+
+    def visitSwitchBlockStatementGroup(self, ctx):
+        # switchLabel✓ blockStatement✓
+        # switchLabel list not handled
+
+        switchLabel = ctx.switchLabel()[0]
+        blockStatement = ctx.blockStatement()
+
+        switchBody = self.visitAll(blockStatement)
+        switchBody = self.emptyToPass(switchBody)
+
+        node = self.visit(switchLabel)
+
+        if hasattr(node, "body"):
+            node.body = switchBody
+        else:
+            node = switchBody
+
+        return node
+    
+    def visitSwitchLabel(self, ctx):
+        # CASE✕ COLON✕ typeType✕ expression✓ IDENTIFIER✕ identifier✕ DEFAULT✓
+
+        switchDEFAULT = ctx.DEFAULT()
+        expression = ctx.expression()
+
+
+        node = None
+        if switchDEFAULT == None:
+            labelValue = self.visit(expression)
+            node = ast.If(test=labelValue, body=[], orelse=[])
+        else:
+            node = []
+        return node
+    
+    def visitFinallyBlock(self, ctx):
+        # FINALLY✕ block✓
+
+        return self.visit(ctx.block())
+
+    def visitCatchClause(self, ctx):
+        # CATCH✕ LPAREN✕ catchType✓ identifier✓ RPAREN✕ block✓ variableModifier✕
+
+        catchClauseBody = self.visit(ctx.block())
+        catchClauseBody = self.emptyToPass(catchClauseBody)
+
+        return ast.ExceptHandler(type=self.visit(ctx.catchType()),name=self.visit(ctx.identifier()),body=catchClauseBody)
+
+    def visitCatchType(self, ctx):
+        # qualifiedName✓ BITOR✕
+        # List not handled
+        # Exceptions not converted
+
+        exception = self.visit(ctx.qualifiedName()[0])
+
+        # An example of how exceptions could be converted
+        if (exception == "Exception"):
+            exception = "Exception"
+
+        return ast.Name(id=exception, ctx=ast.Load())
+
+    def visitQualifiedName(self, ctx):
+        # identifier✓ DOT✕
+        # List not handled
+        
+        return self.visit(ctx.identifier()[0])
 
     def visitLocalTypeDeclaration(self, ctx):
         # classDeclaration✓ enumDeclaration✕ interfaceDeclaration✕
@@ -347,10 +526,8 @@ class ASTVisitor(JavaParserVisitor):
         if variableInitializer != None:
             variableValue = self.visit(ctx.variableInitializer())
             return (ast.Name(id=variableName, ctx=ast.Store()), variableValue)
-            #return ast.Assign(targets=[ast.Name(id=variableName, ctx=ast.Store())], value=variableValue)
         elif variableInitializer == None:
             return (ast.Name(id=variableName, ctx=ast.Store()), ast.Constant(value=None))
-            #return ast.Assign(targets=[ast.Name(id=variableName, ctx=ast.Store())], value=None)
         else:
             return None
 
@@ -375,6 +552,10 @@ class ASTVisitor(JavaParserVisitor):
         # LBRACE✕ RBRACE✕ variableInitializer✓ COMMA✕
         node = ast.List(elts=self.visitAll(ctx.variableInitializer()), ctx=ast.Load())
         return node
+
+    def visitParExpression(self, ctx):
+        # LPAREN✕ expression✓ RPAREN✕
+        return self.visit(ctx.expression())
 
     def visitExpression(self, ctx):
         # primary✓ methodCall✓ NEW✕ creator✓ LPAREN✕ typeType✕
@@ -440,13 +621,7 @@ class ASTVisitor(JavaParserVisitor):
         # exprSUPER = ctx.SUPER() # super
 
         expressions = []
-        attrName = None
         node = None
-
-        if exprDOT != None:
-            self.astCtx == ast.Load() # Assignment context order is reversed for DOT expression (python AST.Attribute)
-            if identifier != None:
-                attrName = self.visit(identifier)
 
         if primary != None:
             return self.visit(primary)
@@ -455,15 +630,36 @@ class ASTVisitor(JavaParserVisitor):
         elif creator != None: # e.g. x = new Object()
             return self.visit(creator)
 
-        self.astCtx = self.assignmentContext(ctx) # TODO: FIX THIS !!!
+        self.astCtx = self.assignmentContext(ctx) # Global variable, set to ast.Store() if we are storing a value (assignment)
 
+        if exprASSIGN != None:
+            # If assignment has a dot or slice, the last, rather than the first, element must have ctx = ast.Store()
+            if (expression[0].DOT() != None or expression[0].LBRACK() != None):
+                self.asnCtx = True # Global variable, is True for the first child of an assignment (left hand side)
+        
         if len(expression) > 0:
             expressions = self.visitAll(expression)
 
         if exprLBRACK != None: # Slice expression
+            if (expression[0].DOT() == None and expression[0].LBRACK() == None and self.asnCtx == True):
+                # If this is the last child of a slice or dot (the variable being written), and we are on the LHS of assignment
+                self.astCtx = ast.Store()
+                self.asnCtx = False
             node = ast.Subscript(value=expressions[0], slice=expressions[1], ctx=self.astCtx)
+        elif exprDOT != None:
+            if (expression[0].DOT() == None and expression[0].LBRACK() == None and self.asnCtx == True):
+                self.astCtx = ast.Store()
+                self.asnCtx = False
+            node = ast.Attribute(value=expressions[0], attr=self.visit(identifier), ctx=self.astCtx)
+        elif exprASSIGN != None:
+            if expression[1].ASSIGN() == None: # Single assignment, e.g. x = 0
+                node = ast.Assign(targets=[expressions[0]], value=expressions[1])
+            else:
+                # Multiple assignment, e.g. x = y = 0
+                expressions[1].targets.insert(0, expressions[0]) # Retain the assignment order
+                node = expressions[1]
         elif len(exprBITAND) > 0:
-            if len(exprBITAND > 1):
+            if len(exprBITAND) > 1:
                 print("exprBITAND > 1")
                 return None
             else:
@@ -485,25 +681,25 @@ class ASTVisitor(JavaParserVisitor):
         elif exprMOD != None:
             node = ast.BinOp(left=expressions[0], op=ast.Mod(), right=expressions[1])
         elif len(exprLT) > 0:
-            if len(exprLT > 1):
+            if len(exprLT) > 1:
                 print("exprLT > 1")
                 return None
             else:
-                node = ast.Compare(left=expressions[0], ops=ast.Lt(), comparators=expressions[1])
+                node = ast.Compare(left=expressions[0], ops=[ast.Lt()], comparators=[expressions[1]])
         elif len(exprGT) > 0:
-            if len(exprGT > 1):
+            if len(exprGT) > 1:
                 print("exprGT > 1")
                 return None
             else:
-                node = ast.Compare(left=expressions[0], ops=ast.Gt(), comparators=expressions[1])
+                node = ast.Compare(left=expressions[0], ops=[ast.Gt()], comparators=[expressions[1]])
         elif exprLE != None:
-            node = ast.Compare(left=expressions[0], ops=ast.LtE(), comparators=expressions[1])
+            node = ast.Compare(left=expressions[0], ops=[ast.LtE()], comparators=[expressions[1]])
         elif exprGE != None:
-            node = ast.Compare(left=expressions[0], ops=ast.GtE(), comparators=expressions[1])
+            node = ast.Compare(left=expressions[0], ops=[ast.GtE()], comparators=[expressions[1]])
         elif exprEQUAL != None:
-            node = ast.Compare(left=expressions[0], ops=ast.Eq(), comparators=expressions[1])
+            node = ast.Compare(left=expressions[0], ops=[ast.Eq()], comparators=[expressions[1]])
         elif exprNOTEQUAL != None:
-            node = ast.Compare(left=expressions[0], ops=ast.NotEq(), comparators=expressions[1])
+            node = ast.Compare(left=expressions[0], ops=[ast.NotEq()], comparators=[expressions[1]])
         elif exprCARET != None:
             node = ast.BinOp(left=expressions[0], op=ast.BitXor(), right=expressions[1])
         elif exprBITOR != None:
@@ -512,9 +708,6 @@ class ASTVisitor(JavaParserVisitor):
             node = ast.BoolOp(op=ast.And(), values=[expressions[0],expressions[1]])
         elif exprOR != None:
             node = ast.BoolOp(op=ast.Or(), values=[expressions[0],expressions[1]])
-        elif exprASSIGN != None:
-            #print(ast.dump(ast.Assign(targets=[expressions[0]], value=expressions[1]),indent=4))
-            return ast.Assign(targets=[expressions[0]], value=expressions[1])
         elif exprADD_ASSIGN != None:
             node = ast.AugAssign(target=expressions[0], op=ast.Add(), value=expressions[1])
         elif exprSUB_ASSIGN != None:
@@ -535,8 +728,6 @@ class ASTVisitor(JavaParserVisitor):
             node = ast.AugAssign(target=expressions[0], op=ast.LShift(), value=expressions[1])
         elif exprMOD_ASSIGN != None:
             node = ast.AugAssign(target=expressions[0], op=ast.Mod(), value=expressions[1])
-        elif exprDOT != None:
-            node = ast.Attribute(value=expressions[0], attr=attrName, ctx=self.astCtx)
             
         self.astCtx = ast.Load()
 
@@ -800,7 +991,11 @@ class ASTVisitor(JavaParserVisitor):
         else:
             return ast.Load()
 
-        
+    def emptyToPass(self, list): # Converts empty lists to ast.Pass() for bodies
+        if list == []:
+            print(list)
+            list = [ast.Pass()]
+        return list
 
     def visitAll(self, nodeList):
         # Visit all nodes in a list, and returns their values in a list

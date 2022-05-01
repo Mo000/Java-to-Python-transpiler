@@ -5,30 +5,48 @@ Module(
             bases=[],
             keywords=[],
             body=[
-                Assign(
-                    targets=[
-                        Name(id='f', ctx=Store())],
-                    value=BinOp(
-                        left=BinOp(
-                            left=BinOp(
-                                left=Constant(value=1),
+                FunctionDef(
+                    name='main',
+                    args=[
+                        arguments(
+                            posonlyargs=[],
+                            args=[
+                                arg(arg='args')],
+                            kwonlyargs=[],
+                            kw_defaults=[],
+                            defaults=[])],
+                    body=[
+                        Assign(
+                            targets=[
+                                Name(id='x', ctx=Store())],
+                            value=Constant(value=0)),
+                        For(
+                            target=Name(id='i', ctx=Store()),
+                            iter=Call(
+                                func=Name(id='range', ctx=Load()),
+                                args=[
+                                    Constant(value=0),
+                                    Constant(value=10),
+                                    Constant(value=1)],
+                                keywords=[]),
+                            body=[
+                                If(
+                                    test=Compare(
+                                        left=Name(id='i', ctx=Load()),
+                                        ops=[
+                                            Eq()],
+                                        comparators=[
+                                            Constant(value=2)]),
+                                    body=[
+                                        Continue()],
+                                    orelse=[])],
+                            orelse=[]),
+                        Return(
+                            value=BinOp(
+                                left=Name(id='x', ctx=Load()),
                                 op=Add(),
-                                right=Constant(value=2)),
-                            op=Add(),
-                            right=BinOp(
-                                left=Constant(value=2),
-                                op=Mult(),
-                                right=BinOp(
-                                    left=BinOp(
-                                        left=BinOp(
-                                            left=Constant(value=2),
-                                            op=Mult(),
-                                            right=Constant(value=4)),
-                                        op=Add(),
-                                        right=Constant(value=3)),
-                                    op=Mult(),
-                                    right=Constant(value=3)))),
-                        op=Mult(),
-                        right=Constant(value=2)))],
+                                right=Constant(value=5)))],
+                    decorator_list=[],
+                    returns=[])],
             decorator_list=[])],
     type_ignores=[])

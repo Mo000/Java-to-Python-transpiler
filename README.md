@@ -22,4 +22,9 @@ REPORT NOTES:
 
     Conversions aren't immediately obvious
         e.g. expression.DOT() -> ast.Attribute()
-    Load/Store for python AST
+    Load/Store - assignment context for python AST
+    For statements.. infinite loops, expression list, python orelse
+    Multiple assignment, z = y = 0
+    Exceptions.. zzz
+    Switch statements 🤔
+    Java empty bodies -> Python pass()
