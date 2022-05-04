@@ -1,6 +1,20 @@
+import java.util.ArrayList;
 public class testfile
 {
-    public static int main(String[] args) {
+    testfile test = this;
+    public static void main(String[] args) {
+        // String[] arr = {"e", "f"};
+        // for (String myValue : arr) {
+        // }
+        // for (int x = 0; x<1000; x=x+(5*2)*x){
+
+        // }
+        // int y = object.attribute.length();
+        // runClass();
+        int testtttt = ~5;
+        int x = 5;
+        ArrayList<String> cars = new ArrayList<String>(); // Create an ArrayList object
+        System.out.println(cars instanceof ArrayList);
         // int y = 0;
         // if(y > 1 && y > 0){
         //     int x = 0;
@@ -35,13 +49,20 @@ public class testfile
         // finally {
         //     int f = 6;
         // }
-        int x = 0;
-        for (int i=0; i<10; i++){
-            if (i==2){
-                continue;
-            }
-        }
-        return (x+5);
+        // int x = 0;
+        // for (int i=0; i<10; i++){
+        //     if (i==2){
+        //         continue;
+        //     }
+        // }
+        // // return (x+5);
+        // String xe = "hello";
+        // String[] result = xe.split(" ");
+        // System.out.println("e");
+        // test("e", 5);
+        // int x = 5;
+        // x <<= 2;
+        // System.out.println(x);
         // switch(x){
         //     case 0:
         //         switch(x){
@@ -81,30 +102,30 @@ public class testfile
     // public testfile(int xx){
     //     x = xx;
     // }
-//      public static void test(String x, int y) {
-//         String[][] i = {{"g", "h"}};
-//         i[0][0] = "z";
-//         int ee = 5;
-//         ee+=5;
-//         ee++;
-//         int t;
-//         int zz = 5 + 10;
-//         zz = zz + 20;
-//         testfile myObj  = new testfile(5);
-//         myObj.x = 10;
-//         int c = myObj.x;
-//         int z = 20;
-//         c = z;
-//         myObj.x = 5;
-//         String zzz = "hey";
-//         int g = 2 + 6;
-//         g = g + 3;
-//         int a = g;
-//         String[][] d;
-//         zzz = "heys";
-//         x = "5";
-//         y = 5;
-//     }
+    // public static void test(String x, int y) {
+    // //     // String[][] i = {{"g", "h"}};
+    // //     // i[0][0] = "z";
+    // //     // int ee = 5;
+    // //     // ee+=5;
+    // //     // ee++;
+    //     int t;
+    //     int zz = 5 + 10;
+    // //     // zz = zz + 20;
+    // //     // testfile myObj  = new testfile(5);
+    // //     // myObj.x = 10;
+    // //     // int c = myObj.x;
+    // //     // int z = 20;
+    // //     // c = z;
+    // //     // myObj.x = 5;
+    // //     // String zzz = "hey";
+    // //     // int g = 2 + 6;
+    // //     // g = g + 3;
+    // //     // int a = g;
+    // //     // String[][] d;
+    // //     // zzz = "heys";
+    // //     // x = "5";
+    // //     // y = 5;
+    // }
 }  
 // class test2 extends testfile{
 // }

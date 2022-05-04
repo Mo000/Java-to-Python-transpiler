@@ -6,8 +6,10 @@ import ast
 
 class ASTVisitor(JavaParserVisitor):
 
+    # Global variables
     astCtx = ast.Load() # Set context for loading/store identifiers
-    asnCtx = False # Set context for assignment
+    asnCtx = False # Set context for assignment expression
+    methodCtx = None # Set context for method
 
     # Visit a parse tree produced by JavaParser#compilationUnit.
     def visitCompilationUnit(self, ctx):
@@ -97,7 +99,37 @@ class ASTVisitor(JavaParserVisitor):
     def visitClassBody(self, ctx):
         # LBRACE✕ RBRACE✕ classBodyDeclaration✓
         classBodyDeclaration = ctx.classBodyDeclaration() # List declarations within the class body
-        return self.visitAll(classBodyDeclaration)
+
+        constructor = None
+        node = None
+        
+        # If there is no constructor, create one with parameter 'self'
+        for declaration in classBodyDeclaration:
+            memberDeclaration = declaration.memberDeclaration().constructorDeclaration()
+            if memberDeclaration != None:
+                constructor = memberDeclaration
+                
+        node = self.visitAll(classBodyDeclaration)
+
+        if constructor == None:
+
+            simpleConstructor = ast.FunctionDef(
+            name="__init__",
+            args=[
+                ast.arguments(
+                    posonlyargs=[],
+                    args=[ast.arg(arg='self')],
+                    kwonlyargs=[],
+                    kw_defaults=[],
+                    defaults=[]
+            )],
+            body=[ast.Pass()],
+            decorator_list=[],
+            returns=[]
+            )
+            node.insert(0, simpleConstructor)
+
+        return node
 
     def visitClassBodyDeclaration(self, ctx):
         # SEMI✕ block✕ STATIC✕ modifier✕ memberDeclaration✓
@@ -154,7 +186,7 @@ class ASTVisitor(JavaParserVisitor):
         constructorBody = self.visit(block)
         constructorBody = self.emptyToPass(constructorBody)
 
-        constructorArgs = []
+        constructorArgs = [ast.arg(arg='self')]
         for arg in constructorParams:
             constructorArgs.append(ast.arg(arg=arg))
 
@@ -187,7 +219,7 @@ class ASTVisitor(JavaParserVisitor):
         methodParams = self.visit(formalParameters)
         methodBody = self.emptyToPass(methodBody)
         
-        methodArgs = []
+        methodArgs = [ast.arg(arg='self')] # As all Java methods will be within classes, they should all have 'self' arg in Python
         for arg in methodParams:
             methodArgs.append(ast.arg(arg=arg))
         
@@ -226,14 +258,15 @@ class ASTVisitor(JavaParserVisitor):
         localTypeDeclaration = ctx.localTypeDeclaration()
         statement = ctx.statement()
 
+        node = None
+
         if localVariableDeclaration != None:
-            return self.visit(localVariableDeclaration)
+            node = self.visit(localVariableDeclaration)
         elif localTypeDeclaration != None:
-            return self.visit(localTypeDeclaration)
+            node = self.visit(localTypeDeclaration)
         elif statement != None:
-            return self.visit(statement)
-        else:
-            return None
+            node = self.visit(statement)
+        return node
 
     def visitStatement(self, ctx):
         # block✓ ASSERT✕ expression✓ SEMI✕ COLON✕ IF✓ parExpression✓
@@ -264,7 +297,6 @@ class ASTVisitor(JavaParserVisitor):
         stateCONTINUE = ctx.CONTINUE()
         switchExpression = ctx.switchExpression()
 
-
         statements = []
         parenExpression = []
         node = None
@@ -285,8 +317,14 @@ class ASTVisitor(JavaParserVisitor):
             node = ast.If(test=parenExpression, body=ifBody, orelse=elseNode)
         elif stateFOR != None:
             node = self.visit(forControl)
-            node.body.extend(statements[0]) # Concatenate body lists
-            node.body = self.emptyToPass(node.body)
+            if not isinstance(node, list):
+                node.body.extend(statements) # Concatenate body lists
+                node.body = self.emptyToPass(node.body)
+            else:
+                node[1].body.extend(statements)
+                node[1].body.append(node[2]) # Add iterator statement to end of while loop
+                node.pop() # Remove iterator from list (will be appended to while body, not method body)
+                node[1].body = self.emptyToPass(node[1].body)
         elif stateWHILE != None:
             whileBody = statements[0]
             whileBody = self.emptyToPass(whileBody)
@@ -301,7 +339,6 @@ class ASTVisitor(JavaParserVisitor):
             tryBody = self.emptyToPass(tryBody)
             node = ast.Try(body=tryBody, handlers=self.visitAll(catchClause), orelse=[], finalbody=finalBodyNode)
         elif stateSWITCH != None:
-            # parenExpression switchBlockStatementGroup[] switchLabel[]
             prevNode = []
             for i in range(len(switchBlockStatementGroup)-1,-1,-1): # Iterate backwards
                 switchNode = self.visit(switchBlockStatementGroup[i])
@@ -323,12 +360,15 @@ class ASTVisitor(JavaParserVisitor):
             return ast.Continue()
         elif len(expression)>0:
             if len(expression)>1:
-                print("len(expression)>1")
                 return self.visitAll(expression)
             else:
-                return self.visit(expression[0])
+                if expression[0].methodCall != None: # If the statement is a method call, the resulting node will be ast.Expr()
+                    return ast.Expr(value=self.visit(expression[0]))
+                else:
+                    return self.visit(expression[0])
         elif block != None:
             node = self.visit(block)
+            
         return node
 
     def visitForControl(self, ctx):
@@ -339,22 +379,17 @@ class ASTVisitor(JavaParserVisitor):
         expressionList = ctx.expressionList()
         enhancedForControl = ctx.enhancedForControl() # e.g. for (int x : array) {}
 
-        #TODO: implement enhanced for control
-        #TODO: infinite loops
-        
         node = None
 
         if enhancedForControl != None:
-            print("enhanced for loop")
-            node = None
+            node = self.visit(enhancedForControl)
         else:
-            # Non-infinite loop, single expression
-            
+            # Non-infinite loop
             init = self.visit(forInit)
             expr = self.visit(expression)
             exprList = self.visit(expressionList)
 
-            # Convert {x=a; x<b; x+=c} to x in range(a, b, c)
+            # Extract values from equivalent python ast nodes
             forBody = []
             if hasattr(init.targets[0], "elts"): # Unpack multiple assignment tuples
                 forTarget = init.targets[0].elts[0]
@@ -370,27 +405,33 @@ class ASTVisitor(JavaParserVisitor):
             forB = expr.comparators[0]
             forBOp = expr.ops[0] # Lt <, Gt >, LtE <=, GtE >=
             forC = exprList[0].value
-            forCOp = exprList[0].op # Add, Sub
-            if ast.dump(forCOp) == "Add()":
-                if ast.dump(forBOp) == "Gt()" or ast.dump(forBOp) == "GtE()":
-                    # Potentially infinite loop -> TODO: make a while loop
-                    print("infinite loop")
-            else: # Sub
-                forC.value = -forC.value
-                if ast.dump(forBOp) == "Lt()" or ast.dump(forBOp) == "LtE()":
-                    print("infinite loop")
-            
-            node = ast.For(target=forTarget, iter=ast.Call(
-                func=ast.Name(
-                    id='range', ctx=ast.Load()),
-                    args=[
-                        forA,
-                        forB,
-                        forC],
-                    keywords=[]),
-                body=forBody, orelse=[])
+
+            # Convert {x=a; x<b; x+=c} to while loop
+            # [variable statement, condition statement, iterator statement]
+            node = [None, None, None]
+
+            node[0] = ast.Assign(targets=[forTarget], value=forA)
+            node[1] = ast.While(test=ast.Compare(left=forTarget, ops=[forBOp], comparators=[forB]),
+             body=[], orelse=[])
+            node[2] = ast.Assign(targets=[forTarget], value=forC)
         return node
     
+    def visitEnhancedForControl(self, ctx):
+        # variableDeclaratorId✓ COLON✕ expression✓ typeType✕ VAR✕ variableModifier✕
+
+        variableDeclaratorId = ctx.variableDeclaratorId()
+        expression = ctx.expression()
+
+        var = self.visit(variableDeclaratorId)
+        expr = self.visit(expression)
+
+        node = None
+
+        node = ast.For(target=ast.Name(id=var, ctx=ast.Load()),
+         iter=expr, body=[], orelse=[])
+
+        return node
+
     def visitForInit(self, ctx):
         # localVariableDeclaration✓ expressionList✕
 
@@ -559,8 +600,8 @@ class ASTVisitor(JavaParserVisitor):
 
     def visitExpression(self, ctx):
         # primary✓ methodCall✓ NEW✕ creator✓ LPAREN✕ typeType✕
-        # RPAREN✕ expression✓ annotation✕ BITAND✓ ADD✓ ✓ ✓
-        # DEC✓ TILDE✕ BANG✓ lambdaExpression✕ switchExpression✕
+        # RPAREN✕ expression✓ annotation✕ BITAND✓ ADD✓
+        # DEC✓ TILDE✓ BANG✓ lambdaExpression✕ switchExpression✕
         # COLONCOLON✕ identifier✓ typeArguments✕ classType✕ MUL✓
         # DIV✓ MOD✓ LT✓ GT✓ LE✓ GE✓ EQUAL✓ NOTEQUAL✓ CARET✓ BITOR✓ AND✓
         # OR✓ COLON✕ QUESTION✕ ASSIGN✓ ADD_ASSIGN✓ SUB_ASSIGN✓
@@ -586,7 +627,7 @@ class ASTVisitor(JavaParserVisitor):
         exprSUB = ctx.SUB() # -
         exprINC = ctx.INC() # ++
         exprDEC = ctx.DEC() # --
-        # exprTILDE = ctx.TILDE() # ~
+        exprTILDE = ctx.TILDE() # ~
         exprBANG = ctx.BANG() # !
         # exprCOLONCOLON = ctx.COLONCOLON() # ::
         exprMUL = ctx.MUL() # *
@@ -614,22 +655,22 @@ class ASTVisitor(JavaParserVisitor):
         exprXOR_ASSIGN = ctx.XOR_ASSIGN() # ^=
         exprRSHIFT_ASSIGN = ctx.RSHIFT_ASSIGN() # >>=
         # exprURSHIFT_ASSIGN = ctx.URSHIFT_ASSIGN() # >>>=
-        exprLSHIFT_ASSIGN = ctx.LSHIFT_ASSIGN() # <<
+        exprLSHIFT_ASSIGN = ctx.LSHIFT_ASSIGN() # <<=
         exprMOD_ASSIGN = ctx.MOD_ASSIGN() # %=
         exprDOT = ctx.DOT() # .
         # exprTHIS = ctx.THIS() # this
         # exprSUPER = ctx.SUPER() # super
+        exprINSTANCEOF = ctx.INSTANCEOF() # instanceof
 
         expressions = []
         node = None
 
-        if primary != None:
+        if methodCall != None:
+            return self.identifyMethod(ctx)
+        elif primary != None:
             return self.visit(primary)
-        elif methodCall != None:
-            return self.visit(methodCall)
         elif creator != None: # e.g. x = new Object()
             return self.visit(creator)
-
         self.astCtx = self.assignmentContext(ctx) # Global variable, set to ast.Store() if we are storing a value (assignment)
 
         if exprASSIGN != None:
@@ -650,7 +691,7 @@ class ASTVisitor(JavaParserVisitor):
             if (expression[0].DOT() == None and expression[0].LBRACK() == None and self.asnCtx == True):
                 self.astCtx = ast.Store()
                 self.asnCtx = False
-            node = ast.Attribute(value=expressions[0], attr=self.visit(identifier), ctx=self.astCtx)
+            node = ast.Attribute(value=expressions[0], attr=self.visit(ctx.getChild(2)), ctx=self.astCtx)
         elif exprASSIGN != None:
             if expression[1].ASSIGN() == None: # Single assignment, e.g. x = 0
                 node = ast.Assign(targets=[expressions[0]], value=expressions[1])
@@ -680,6 +721,8 @@ class ASTVisitor(JavaParserVisitor):
             node = ast.BinOp(left=expressions[0], op=ast.Div(), right=expressions[1])
         elif exprMOD != None:
             node = ast.BinOp(left=expressions[0], op=ast.Mod(), right=expressions[1])
+        elif exprTILDE != None:
+            node = ast.UnaryOp(op=ast.Invert(), operand=expressions[0])
         elif len(exprLT) > 0:
             if len(exprLT) > 1:
                 print("exprLT > 1")
@@ -728,6 +771,10 @@ class ASTVisitor(JavaParserVisitor):
             node = ast.AugAssign(target=expressions[0], op=ast.LShift(), value=expressions[1])
         elif exprMOD_ASSIGN != None:
             node = ast.AugAssign(target=expressions[0], op=ast.Mod(), value=expressions[1])
+        elif exprINSTANCEOF != None:
+            child1 = self.visit(ctx.getChild(0))
+            child2 = ast.Name(id=self.visit(ctx.getChild(2)),ctx=ast.Load())
+            node = ast.Call(func=ast.Name(id='isinstance', ctx=ast.Load()), args=[child1, child2], keywords=[])
             
         self.astCtx = ast.Load()
 
@@ -780,7 +827,13 @@ class ASTVisitor(JavaParserVisitor):
     def visitArguments(self, ctx):
         # LPAREN✕ RPAREN✕ expressionList✓
 
-        return self.visit(ctx.expressionList())
+        expressionList = ctx.expressionList()
+        
+        node = []
+
+        if expressionList != None:
+            node = self.visit(expressionList)
+        return node
 
     def visitExpressionList(self, ctx):
         # expression✓ COMMA✕
@@ -793,16 +846,23 @@ class ASTVisitor(JavaParserVisitor):
         return self.visit(ctx.arrayInitializer())
 
     def visitPrimary(self, ctx):
-        # LPAREN✕ expression✓ RPAREN✕ THIS✕ SUPER✕ literal✓
+        # LPAREN✕ expression✓ RPAREN✕ THIS✓ SUPER✓ literal✓
         # identifier✓ typeTypeOrVoid✕ DOT✕ CLASS✕ nonWildcardTypeArguments✕
         # explicitGenericInvocationSuffix✕ arguments✕
 
         literal = ctx.literal()
         identifier = ctx.identifier()  
         expression = ctx.expression()
-        node = ast.Constant(value=None)
+        exprTHIS = ctx.THIS()
+        exprSUPER = ctx.SUPER()
 
-        if expression != None: # Parenthesis
+        node = ast.Constant(value=None)
+        
+        if exprTHIS != None:
+            node = ast.Name(id="self", ctx=self.astCtx)
+        if exprSUPER != None:
+            node = ast.Name(id="super", ctx=self.astCtx)
+        elif expression != None: # Parenthesis
             node = self.visit(expression)
         elif literal != None:
             value = self.visit(literal)
@@ -828,8 +888,15 @@ class ASTVisitor(JavaParserVisitor):
 
     def visitFormalParameters(self, ctx):
         # LPAREN✕ RPAREN✕ receiverParameter✕ COMMA✕ formalParameterList✓
+
+        formalParameterList = ctx.formalParameterList()
+
+        node = []
+
+        if formalParameterList != None:
+            node = self.visit(formalParameterList)
         
-        return self.visit(ctx.formalParameterList())
+        return node
         
     def visitFormalParameterList(self, ctx):
         # formalParameter✓ COMMA✕ lastFormalParameter✕
@@ -871,10 +938,7 @@ class ASTVisitor(JavaParserVisitor):
             return None
         else:
             identifier = self.visit(ctx.identifier(0))
-            if identifier == "String":
-                return str
-            else:
-                return identifier
+            return identifier
 
     def visitLiteral(self, ctx):
         # integerLiteral✓ floatLiteral✓ CHAR_LITERAL✓ STRING_LITERAL✓
@@ -950,23 +1014,125 @@ class ASTVisitor(JavaParserVisitor):
         DOUBLE = ctx.DOUBLE()
 
         if BOOLEAN != None:
-            return bool
+            return "bool"
         elif CHAR != None:
-            return str
+            return "str"
         elif BYTE != None:
-            return int
+            return "int"
         elif SHORT != None:
-            return int
+            return "int"
         elif INT != None:
-            return int
+            return "int"
         elif LONG != None:
-            return int
+            return "int"
         elif FLOAT != None:
-            return float
+            return "float"
         elif DOUBLE != None:
-            return float
+            return "float"
         else:
             return None
+
+    
+    def visitMethodCall(self, ctx):
+        # identifier✕ expressionList✓ LPAREN✕ RPAREN✕ THIS✓ SUPER✓
+        
+        expressionList = ctx.expressionList()
+
+        node = None
+        argsList = None
+        funcNode = None
+        objectArg = self.methodCtx[2]
+
+        if self.methodCtx == None:
+            print("No method context")
+            return ast.Pass()
+        if expressionList == None:
+            argsList = []
+        else:
+            argsList = self.visit(expressionList)
+            
+        if objectArg != None:
+            argsList.insert(0, self.visit(objectArg))
+
+        methodNames = self.methodCtx[0] # e.g. Name of the method object/attributes (i.e. separated by dots)
+        methodName = self.methodCtx[1] # Name of the method with parens ()
+        
+        if self.methodCtx[0] != "": # method of attribute
+            nameList = methodNames.split(".")
+            # Create first node from first name in nameList
+            prevNode = ast.Name(id=nameList[0], ctx=ast.Load())
+            nameList.pop(0)
+            # Add method name as last name in nameList
+            nameList.append(methodName)
+            # Iterate over the rest of nameList to append each name as an attribute
+            for name in nameList:
+                funcNode = ast.Attribute(value=prevNode, attr=name, ctx=ast.Load())
+                prevNode = funcNode
+        else:
+            funcNode = ast.Name(id=methodName, ctx=ast.Load())
+
+        node = ast.Call(func=funcNode, args=argsList, keywords=[])
+
+        return node
+    
+    def identifyMethod(self, ctx):
+        # Identify a method by expression and methodCall identifiers
+
+        expression = ctx.expression()
+        methodCall = ctx.methodCall()
+        convertedMethod = None
+
+        if len(expression) > 0:
+            if len(expression) > 1:
+                print("len(expression) > 1")
+                return None
+            exprTxt = expression[0].getText()
+        else:
+            exprTxt = "self" # If there's no object, then it must be referencing a method within its own class, so use 'self'
+        if methodCall.SUPER() == None: # "THIS" and "SUPER" can be used as methods, without an object
+            if methodCall.THIS() == None:
+                methodTxt = self.visit(methodCall.identifier())
+            else:
+                exprTxt = ""
+                methodTxt = "this"
+        else:
+            exprTxt = ""
+            methodTxt = "super"
+
+        # [javaExpr (string), javaMethod (string), pythonExpr (string), pythonMethod (string), args]
+        simpleConversionList = [
+            ["System.out", "println", "", "print", ""],
+            ["", "super", "", "super", ""],
+            ["", "this", "", "self", ""],
+        ]
+
+        objectConversionList = [
+            ["object", "length", "", "len", ""],
+        ]
+        for conversion in simpleConversionList:
+            convertedMethod = self.convertMethod(exprTxt, methodTxt, conversion[0], conversion[1], conversion[2], conversion[3])
+            if convertedMethod != None: # Found method
+                break
+
+        if convertedMethod == None:
+            for conversion in objectConversionList: # Check objectConversionList if not found in simpleConversionList
+                convertedMethod = self.convertMethod("object", methodTxt, conversion[0], conversion[1], conversion[2], conversion[3])
+                if convertedMethod != None:
+                    convertedMethod[2] = expression[0] # Add object as argument (e.g. str1.length -> len(str1))
+                    break
+
+        if convertedMethod == None:
+            convertedMethod = [exprTxt, methodTxt, None] # No conversion, if no method is found
+
+        self.methodCtx = convertedMethod # Set the global method context
+
+        return self.visit(methodCall)
+
+    def convertMethod(self, expression, methodCall, javaExpr, javaMethod, pythonExpr, pythonMethod):
+        newMethod = None
+        if (expression == javaExpr and methodCall == javaMethod):
+            newMethod = [pythonExpr, pythonMethod, None]
+        return newMethod
     
     def cast(self, value, type):
         # Cast a (string) value to another type, using type object
@@ -993,7 +1159,6 @@ class ASTVisitor(JavaParserVisitor):
 
     def emptyToPass(self, list): # Converts empty lists to ast.Pass() for bodies
         if list == []:
-            print(list)
             list = [ast.Pass()]
         return list
 
@@ -1004,6 +1169,10 @@ class ASTVisitor(JavaParserVisitor):
 
         for nodes in nodeList:
             node = self.visit(nodes)
-            visitList.append(node)
+            if isinstance(node, list):
+                # if one node returns a list of nodes, unpack it
+                visitList.extend(node)
+            else:
+                visitList.append(node)
 
         return visitList

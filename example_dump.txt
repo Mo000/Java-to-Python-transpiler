@@ -1,32 +1,29 @@
 Module(
     body=[
-        ImportFrom(
-            module='tkinter',
-            names=[
-                alias(name='Y')],
-            level=0),
         ClassDef(
-            name='test',
+            name='testfile',
             bases=[],
             keywords=[],
             body=[
-                Assign(
-                    targets=[
-                        Tuple(
-                            elts=[
-                                Name(id='x', ctx=Store()),
-                                Name(id='y', ctx=Store())],
-                            ctx=Store())],
-                    value=Tuple(
-                        elts=[
-                            Constant(value=5),
-                            Constant(value=10)],
-                        ctx=Load())),
-                Expr(
-                    value=Call(
-                        func=Name(id='print', ctx=Load()),
+                FunctionDef(
+                    name='main',
+                    args=arguments(
+                        posonlyargs=[],
                         args=[
-                            Name(id='x', ctx=Load())],
-                        keywords=[]))],
+                            arg(arg='args')],
+                        kwonlyargs=[],
+                        kw_defaults=[],
+                        defaults=[]),
+                    body=[
+                        Assign(
+                            targets=[
+                                Name(id='x', ctx=Store())],
+                            value=Call(
+                                func=Name(id='isinstance', ctx=Load()),
+                                args=[
+                                    Constant(value='1'),
+                                    Constant(value='2')],
+                                keywords=[]))],
+                    decorator_list=[])],
             decorator_list=[])],
     type_ignores=[])

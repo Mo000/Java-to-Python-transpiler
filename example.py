@@ -1,6 +1,4 @@
-from tkinter import Y
+class testfile:
 
-
-class test:
-    x,y = 5,10
-    print(x)
+    def main(args):
+        x = isinstance("1", "2")
