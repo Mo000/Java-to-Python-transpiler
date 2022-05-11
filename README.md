@@ -1,17 +1,20 @@
 Basic Java to Python transpiler, using ANTLR4
 Java 17 / Python 3.10
 
-- Classes (ClassDeclaration) [EXTENDS ✓ - IMPLEMENTS ✕ - PERMITS ✕] 
-    - no access modifiers (PRIVATE/PROTECTED/PUBLIC)
-- Variables - (FieldDeclaration / LocalVariableDeclaration)
+- Classes (Class Declarations)
+    - no annotations, apart from extends
+- Variables - (Field Declarations / Local Variable Declarations)
     - primitives: byte/int, short/int, int/int, long/int, float/float, double/float, char/str, string/str, boolean/bool
-    - structures: array/list, [TODO: arrayList/list]
+    - structures: array/list
 - Expressions
     - add (+), subtract (-), muliply (\*), divide (/), increment (++), decrement (--), not (!), mod (%), less-than (<) (<=), greater-than (>) (>=), equals (==), not-equals (!=), slice ([]), and (&&), or (||), bit-or (|), bit-xor (^), bit-and (&), bit-negation (~), assign (=), add-assign (+=), subtract-assign (-=), multiply-assign (\*=), divide-assign (/=), and-assign (&&=), or-assign (||=), xor-assign (^=), rshift-assign (>>=), lshift-assign (<<=), mod assign (%=), parenthesis (()), instanceof, creators ('new'), method-calls
 - Statements
-    - if (& else/else-if), for (& enhanced-for), try (& catch/finally), switch (converted to if...else), return, continue, break
-- Standard Methods
-    - system.out.println()
+    - if (& else/else-if), for (& enhanced-for), try (& catch/finally), switch (converted to if...else), return, continue, break, new (constructors)
+- Methods
+    - Method declarations, method calls
+    - Standard methods
+        - system.out.println()
+        - str.length()
 
 REPORT NOTES:
     Classes/Methods:

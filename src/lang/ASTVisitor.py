@@ -1,4 +1,5 @@
 from copyreg import constructor
+from operator import eq
 from lang.JavaParserVisitor import JavaParserVisitor
 from lang.JavaParser import JavaParser
 from antlr4 import *
@@ -13,7 +14,7 @@ class ASTVisitor(JavaParserVisitor):
 
     # Visit a parse tree produced by JavaParser#compilationUnit.
     def visitCompilationUnit(self, ctx):
-        # packageDeclaration✕ importDeclaration✕ typeDeclaration✓ moduleDeclaration✕ 
+        # packageDeclaration✕ importDeclaration✕ typeDeclaration✓ moduleDeclaration✕ EOF✕
         
         packageDeclaration = ctx.packageDeclaration()
         importDeclaration = ctx.importDeclaration()
@@ -30,6 +31,29 @@ class ASTVisitor(JavaParserVisitor):
             rootList.extend(self.visitAll(typeDeclaration))
         # if moduleDeclaration != None:
         #     print(moduleDeclaration)
+
+        for el in rootList[0].body: # Add if __name__ == '__main__': class().main([]), if there is a main method of the main class
+            if isinstance(el, ast.FunctionDef):
+                if el.name == 'main':
+                    rootList.append(ast.If(
+                        test=ast.Compare(left=ast.Name(id="__name__",ctx=ast.Load()), ops=[ast.Eq()],comparators=[ast.Name(id="'__main__'", ctx=ast.Load())]),
+                        body=[ast.Expr(value=ast.Call(
+                            func=ast.Attribute(
+                                value=ast.Call(
+                                    func=ast.Name(id=rootList[0].name, ctx=ast.Load()),
+                                    args=[],
+                                    keywords=[],
+                                    starargs=[],
+                                    kwargs=[]),
+                                attr='main',
+                                ctx=ast.Load()
+                            ),
+                            args=[ast.List(elts=[],ctx=ast.Load())],
+                            keywords=[],
+                            starargs=[],
+                            kwargs=[]
+                        ))],
+                        orelse=[]))
 
         python_ast = ast.Module(body=rootList, type_ignores=[])
     
@@ -74,7 +98,7 @@ class ASTVisitor(JavaParserVisitor):
     # Visit a parse tree produced by JavaParser#classDeclaration.
     def visitClassDeclaration(self, ctx):
         # CLASS✕ identifier✓ classBody✓ typeParameters✕ EXTENDS✓
-        # typeType✕ IMPLEMENTS✕ typeList✕ PERMITS✕
+        # typeType✓ IMPLEMENTS✕ typeList✕ PERMITS✕
 
         classEXTENDS = ctx.EXTENDS()
 
@@ -87,6 +111,7 @@ class ASTVisitor(JavaParserVisitor):
         if classEXTENDS != None:
             extends = self.visit(ctx.typeType())
             classBase = ast.Constant(value=extends)
+            print(className)
             node = ast.ClassDef(name=className,bases=[classBase],keywords=[],body=classBody,decorator_list=[]) # Can only extend one class in Java
         elif classEXTENDS == None:
             node = ast.ClassDef(name=className,bases=[],keywords=[],body=classBody,decorator_list=[])
@@ -312,7 +337,10 @@ class ASTVisitor(JavaParserVisitor):
                 elseNode = statements[1]
                 if not isinstance(elseNode, list):
                     elseNode = [elseNode] # elseNode must be a list (a block returns a list, a statement does not)
-            ifBody = statements[0]
+            ifBody = statements
+            if stateELSE != None:
+                ifBody.pop()
+            print(ifBody)
             ifBody = self.emptyToPass(ifBody)
             node = ast.If(test=parenExpression, body=ifBody, orelse=elseNode)
         elif stateFOR != None:
@@ -326,7 +354,7 @@ class ASTVisitor(JavaParserVisitor):
                 node.pop() # Remove iterator from list (will be appended to while body, not method body)
                 node[1].body = self.emptyToPass(node[1].body)
         elif stateWHILE != None:
-            whileBody = statements[0]
+            whileBody = statements
             whileBody = self.emptyToPass(whileBody)
             node = ast.While(test=parenExpression, body=whileBody, orelse=[])
         elif stateTRY != None:
@@ -931,7 +959,6 @@ class ASTVisitor(JavaParserVisitor):
         # identifier✓ typeArguments✕ DOT✓
 
         classDOT = self.visitAll(ctx.DOT())
-
         if len(classDOT) > 0:
             identifiers = self.visitAll(ctx.identifier())
             print("len(classDOT) > 0")

@@ -1,7 +1,7 @@
 Module(
     body=[
         ClassDef(
-            name='testfile',
+            name='test3',
             bases=[],
             keywords=[],
             body=[
@@ -19,10 +19,6 @@ Module(
                         Pass()],
                     decorator_list=[],
                     returns=[]),
-                Assign(
-                    targets=[
-                        Name(id='test', ctx=Store())],
-                    value=Name(id='self', ctx=Load())),
                 FunctionDef(
                     name='main',
                     args=[
@@ -35,35 +31,89 @@ Module(
                             kw_defaults=[],
                             defaults=[])],
                     body=[
-                        Assign(
-                            targets=[
-                                Name(id='testtttt', ctx=Store())],
-                            value=UnaryOp(
-                                op=Invert(),
-                                operand=Constant(value=5))),
-                        Assign(
-                            targets=[
-                                Name(id='x', ctx=Store())],
-                            value=Constant(value=5)),
-                        Assign(
-                            targets=[
-                                Name(id='cars', ctx=Store())],
-                            value=Call(
-                                func=Name(id='ArrayList', ctx=Load()),
-                                args=[],
-                                keywords=[])),
                         Expr(
                             value=Call(
-                                func=Name(id='print', ctx=Load()),
-                                args=[
-                                    Call(
-                                        func=Name(id='isinstance', ctx=Load()),
-                                        args=[
-                                            Name(id='cars', ctx=Load()),
-                                            Name(id='ArrayList', ctx=Load())],
-                                        keywords=[])],
+                                func=Attribute(
+                                    value=Name(id='self', ctx=Load()),
+                                    attr='testFunc',
+                                    ctx=Load()),
+                                args=[],
                                 keywords=[]))],
                     decorator_list=[],
+                    returns=[]),
+                FunctionDef(
+                    name='testFunc',
+                    args=[
+                        arguments(
+                            posonlyargs=[],
+                            args=[
+                                arg(arg='self')],
+                            kwonlyargs=[],
+                            kw_defaults=[],
+                            defaults=[])],
+                    body=[
+                        Assign(
+                            targets=[
+                                Name(id='e', ctx=Store())],
+                            value=Call(
+                                func=Name(id='len', ctx=Load()),
+                                args=[
+                                    Constant(value='hello')],
+                                keywords=[])),
+                        Assign(
+                            targets=[
+                                Name(id='i', ctx=Store())],
+                            value=Constant(value=0)),
+                        While(
+                            test=Compare(
+                                left=Name(id='i', ctx=Store()),
+                                ops=[
+                                    Lt()],
+                                comparators=[
+                                    Constant(value=10000)]),
+                            body=[
+                                Expr(
+                                    value=Call(
+                                        func=Name(id='print', ctx=Load()),
+                                        args=[
+                                            Name(id='i', ctx=Load())],
+                                        keywords=[])),
+                                Expr(
+                                    value=Call(
+                                        func=Name(id='print', ctx=Load()),
+                                        args=[
+                                            Name(id='e', ctx=Load())],
+                                        keywords=[])),
+                                Assign(
+                                    targets=[
+                                        Name(id='i', ctx=Store())],
+                                    value=BinOp(
+                                        left=Name(id='i', ctx=Load()),
+                                        op=Add(),
+                                        right=Constant(value=1)))],
+                            orelse=[])],
+                    decorator_list=[],
                     returns=[])],
-            decorator_list=[])],
+            decorator_list=[]),
+        If(
+            test=Compare(
+                left=Name(id='__name__', ctx=Load()),
+                ops=[
+                    Eq()],
+                comparators=[
+                    Name(id="'__main__'", ctx=Load())]),
+            body=[
+                Expr(
+                    value=Call(
+                        func=Attribute(
+                            value=Call(
+                                func=Name(id='test3', ctx=Load()),
+                                args=[],
+                                keywords=[]),
+                            attr='main',
+                            ctx=Load()),
+                        args=[
+                            List(elts=[], ctx=Load())],
+                        keywords=[]))],
+            orelse=[])],
     type_ignores=[])

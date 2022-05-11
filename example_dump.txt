@@ -6,10 +6,23 @@ Module(
             keywords=[],
             body=[
                 FunctionDef(
+                    name='__init__',
+                    args=arguments(
+                        posonlyargs=[],
+                        args=[
+                            arg(arg='self')],
+                        kwonlyargs=[],
+                        kw_defaults=[],
+                        defaults=[]),
+                    body=[
+                        Pass()],
+                    decorator_list=[]),
+                FunctionDef(
                     name='main',
                     args=arguments(
                         posonlyargs=[],
                         args=[
+                            arg(arg='self'),
                             arg(arg='args')],
                         kwonlyargs=[],
                         kw_defaults=[],
@@ -17,13 +30,71 @@ Module(
                     body=[
                         Assign(
                             targets=[
-                                Name(id='x', ctx=Store())],
+                                Tuple(
+                                    elts=[
+                                        Name(id='testint', ctx=Store()),
+                                        Name(id='testint2', ctx=Store())],
+                                    ctx=Store())],
+                            value=Tuple(
+                                elts=[
+                                    Constant(value=None),
+                                    Constant(value=None)],
+                                ctx=Load())),
+                        Assign(
+                            targets=[
+                                Name(id='testint', ctx=Store()),
+                                Name(id='testint2', ctx=Store())],
+                            value=Constant(value=5)),
+                        Assign(
+                            targets=[
+                                Name(id='array', ctx=Store())],
+                            value=List(
+                                elts=[
+                                    Constant(value='e'),
+                                    Constant(value='f')],
+                                ctx=Load())),
+                        Assign(
+                            targets=[
+                                Name(id='z', ctx=Store())],
+                            value=Constant(value=3)),
+                        Assign(
+                            targets=[
+                                Subscript(
+                                    value=Name(id='array', ctx=Load()),
+                                    slice=Constant(value=0),
+                                    ctx=Store())],
+                            value=Constant(value='value')),
+                        AugAssign(
+                            target=Name(id='z', ctx=Store()),
+                            op=Add(),
+                            value=Constant(value=1)),
+                        Expr(
                             value=Call(
-                                func=Name(id='isinstance', ctx=Load()),
+                                func=Name(id='print', ctx=Load()),
                                 args=[
-                                    Constant(value='1'),
-                                    Constant(value='2')],
+                                    Constant(value='hello')],
+                                keywords=[])),
+                        Expr(
+                            value=Call(
+                                func=Name(id='print', ctx=Load()),
+                                args=[
+                                    Name(id='array', ctx=Load())],
                                 keywords=[]))],
                     decorator_list=[])],
-            decorator_list=[])],
+            decorator_list=[]),
+        If(
+            test=Compare(
+                left=Name(id='__name__', ctx=Load()),
+                ops=[
+                    Eq()],
+                comparators=[
+                    Constant(value='__main__')]),
+            body=[
+                Expr(
+                    value=Call(
+                        func=Name(id='print', ctx=Load()),
+                        args=[
+                            Constant(value='e')],
+                        keywords=[]))],
+            orelse=[])],
     type_ignores=[])
